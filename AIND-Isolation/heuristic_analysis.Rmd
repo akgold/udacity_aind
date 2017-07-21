@@ -1,0 +1,46 @@
+---
+title: "Heuristic Analysis"
+author: "Alex Gold"
+date: "7/21/2017"
+output:
+  pdf_document:
+    latex_engine: xelatex
+mainfont: ArialMT
+fontsize: 24pt
+---
+The heuristic analysis seems to reveal that the method that scores positions where the player is close to open spaces and the opponent is not does the best. However, none of these methods vastly outperformed the other. More time considering the game would be needed to design more dominant strategies. Obviously, more repetitions of this simulation would give better data on whether this is true or not.
+
+The plot below reveals the win/loss record of the various heuristics as they ran in the trials.
+
+```{r, echo=F}
+suppressPackageStartupMessages(library(dplyr))
+library(ggplot2)
+
+df <- data.frame(AB_Improved = c(7,3,8,2,6,6,6, 10, 6, 8, 4, 6, 6, 5),
+                 AB_Custom = c(10, 8, 6, 8, 5, 6, 5, 9, 8, 9, 6, 3, 5, 2),
+                 AB_Custom_2 = c(10, 2, 7, 4, 5, 4, 3, 10, 4, 8, 6, 3, 6, 5),
+                 
+                 AB_Custom_3 = c(9, 1, 8, 6, 1, 4, 3, 9, 6, 9, 6, 6, 5, 6))
+
+df <-  df %>%
+  tidyr::gather(Heuristic, pct) %>%
+  mutate(pct = pct/10) %>%
+  mutate(Heuristic = gsub("_", " ", Heuristic),
+         Heuristic = factor(Heuristic,
+                            levels = c("AB Improved",
+                                       "AB Custom",
+                                       "AB Custom 2",
+                                       "AB Custom 3")))
+
+means <- df %>% 
+  group_by(Heuristic) %>%
+  summarize(mean = mean(pct))
+
+ggplot(df) +
+  geom_boxplot(aes(x = Heuristic, y = pct)) +
+  scale_y_continuous(labels = scales::percent) +
+  ylab("Win Percent") +
+  theme_minimal() +
+  ggtitle("Maximizing Proximity to Open Squares Performed Best") +
+  geom_label(data = means, aes(x = Heuristic, y = mean, label = scales::percent(mean)))
+```
