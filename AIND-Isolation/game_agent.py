@@ -1,7 +1,3 @@
-"""Finish all TODO items in this file to complete the isolation project, then
-test your agent's strength against a set of known agents using tournament.py
-and include the results in your report.
-"""
 import random
 
 class SearchTimeout(Exception):
@@ -12,11 +8,6 @@ class SearchTimeout(Exception):
 def custom_score(game, player):
     """Calculate the heuristic value of a game state from the point of view
     of the given player.
-
-    This should be the best heuristic function for your project submission.
-
-    Note: this function should be called from within a Player instance as
-    `self.score()` -- you should not need to call this function directly.
 
     Parameters
     ----------
@@ -241,10 +232,7 @@ class MinimaxPlayer(IsolationPlayer):
             moves = game.get_legal_moves()
 
             # If you're at depth or no move legal moves, return score
-            if game.is_winner(self) or game.is_loser(self):
-                return game.utility(self)
-
-            if depth == 0: 
+            if moves == [] or depth == 0:
                 return self.score(game, self)
 
             # Else, return value of the next move assuming opponent does opposite
@@ -336,14 +324,15 @@ class AlphaBetaPlayer(IsolationPlayer):
             return (-1, -1)
 
         # return first move if timeout happens before first round
-        best_move = moves[0]
+        best_move = moves[-1]
 
         try: 
             depth = 1
             # Just keep going until hit timeout error
             while True:
-                depth += 1
                 best_move = self.alphabeta(game, depth)
+                depth += 1
+
 
         except SearchTimeout:
             return best_move
@@ -397,7 +386,7 @@ class AlphaBetaPlayer(IsolationPlayer):
             raise SearchTimeout()
 
         # Define max and min val functions
-        def _ab_max_val(game, alpha, beta, depth):
+        def _ab_max_val(game, depth, alpha, beta):
             if self.time_left() < self.TIMER_THRESHOLD:
                 raise SearchTimeout()
 
@@ -405,18 +394,14 @@ class AlphaBetaPlayer(IsolationPlayer):
             moves = game.get_legal_moves()
 
             # Return if end state
-            if game.is_winner(self) or game.is_loser(self):
-                return game.utility(self)
-
-            if depth == 0: 
+            if moves == [] or depth == 0: 
                 return self.score(game, self)
 
             val = -float('inf')
 
-            new_games = [game.forecast_move(move) for move in moves]
-            for new_game in new_games:
+            for move in moves:
                 # Get value of child node
-                val = max(val, _ab_min_val(new_game, alpha, beta, depth - 1))
+                val = max(val, _ab_min_val(game.forecast_move(move), depth - 1, alpha, beta))
                 # If value is larger than smallest sibling (beta)
                 if val >= beta:
                     return val
@@ -425,7 +410,7 @@ class AlphaBetaPlayer(IsolationPlayer):
 
             return val
 
-        def _ab_min_val(game, alpha, beta, depth):
+        def _ab_min_val(game, depth, alpha, beta):
             if self.time_left() < self.TIMER_THRESHOLD:
                 raise SearchTimeout()
 
@@ -433,29 +418,23 @@ class AlphaBetaPlayer(IsolationPlayer):
             moves = game.get_legal_moves()
 
             # Return if end state
-            if game.is_winner(self) or game.is_loser(self):
-                return game.utility(self)
-
-            if depth == 0: 
+            if moves == [] or depth == 0: 
                 return self.score(game, self)
 
             val = float('inf')
 
-            print("Min Node Searching: " + str(moves))
-            print("Alpha: " + str(alpha))
             for move in moves:
                 # Get value of child node
-                val = min(val, _ab_max_val(game.forecast_move(move), alpha, beta, depth - 1))
+                val = min(val, _ab_max_val(game.forecast_move(move), depth - 1, alpha, beta))
                 # return if value smaller than largest sibling
-                print(move)
-                print(val)
                 if val <= alpha:
-                    print("CUTOFF BY ALPHA")
                     return val
                 # set smallest sibling
                 beta = min(beta, val)
 
             return val
+
+        # Get best move
 
         moves = game.get_legal_moves()
 
@@ -463,22 +442,21 @@ class AlphaBetaPlayer(IsolationPlayer):
             return (-1, -1)
 
         max_val = -float('inf')
-        best_move = (-1, -1)
+        best_move = moves[0]
 
         # Get maximal move with a - b pruning
-        print("Top Node Searching:")
-        print(game.to_string())
-        print(moves)
         for move in moves:
-            val = _ab_min_val(game.forecast_move(move), alpha, beta, depth - 1)
-            print("Top Node")
-            print("VAL: " + str(val))
-            alpha = max(alpha, val)
-            print(alpha)
-
-            if val > max_val:
+            val = _ab_min_val(game.forecast_move(move), depth - 1, alpha, beta)
+            
+            if val >= max_val:
                 max_val = val
                 best_move = move
+
+            if max_val >= beta:
+                return best_move
+
+            alpha = max(alpha, val)
+
         
         return best_move
 
