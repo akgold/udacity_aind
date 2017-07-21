@@ -100,6 +100,12 @@ def custom_score_3(game, player):
     """
     # Score is combination of number of open spaces, closeness to center
     # of board, and opponent's moves
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
     h, w = game.height/2., game.width/2.
     x,y = game.get_player_location(player)
     own_moves = len(game.get_legal_moves(player))
