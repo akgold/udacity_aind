@@ -4,32 +4,7 @@ class SearchTimeout(Exception):
     """Subclass base exception for code clarity. """
     pass
 
-
 def custom_score(game, player):
-    """Calculate the heuristic value of a game state from the point of view
-    of the given player.
-
-    Parameters
-    ----------
-    game : `isolation.Board`
-        An instance of `isolation.Board` encoding the current state of the
-        game (e.g., player locations and blocked cells).
-
-    player : object
-        A player instance in the current game (i.e., an object corresponding to
-        one of the player objects `game.__player_1__` or `game.__player_2__`.)
-
-    Returns
-    -------
-    float
-        The heuristic value of the current game state to the specified player.
-    """
-    # Score is equal to the player's legal moves minus opponent's legal moves
-    own_moves = len(game.get_legal_moves(player))
-    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
-    return float(own_moves - opp_moves)
-
-def custom_score_2(game, player):
     """Calculate the heuristic value of a game state from the point of view
     of the given player.
 
@@ -51,15 +26,55 @@ def custom_score_2(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
-    # Score is combination of number of open spaces and closeness to center
-    # of board
-    own_moves = len(game.get_legal_moves(player))
-    board_center = (round(game.height/2), round(game.width/2))
-    position = game.get_player_location(player)
-    # taxicab distance to center of board
-    dist = abs(position[0] - board_center[0]) + abs(position[1] - board_center[1])
+    # Score is total distance of opponent to all open squares minus distance of
+    # opponent to all open squares.
+    if game.is_loser(player):
+        return float("-inf")
 
-    return float(own_moves - dist)        
+    if game.is_winner(player):
+        return float("inf")
+
+    # Calculate distance to all open spaces
+    open_spaces = game.get_blank_spaces()
+    x_1, y_1 = game.get_player_location(player)
+    x_2, y_2 = game.get_player_location(game.get_opponent(player))
+
+    dists_1 = [abs(x_1 - x) + abs(y_1 - y) for x, y in open_spaces]
+    dists_2 = [abs(x_2 - x) + abs(y_2 - y) for x, y in open_spaces]
+
+    return sum(dists_2) - sum(dists_1)  
+
+
+def custom_score_2(game, player):
+    """Calculate the heuristic value of a game state from the point of view
+    of the given player.
+
+    Parameters
+    ----------
+    game : `isolation.Board`
+        An instance of `isolation.Board` encoding the current state of the
+        game (e.g., player locations and blocked cells).
+
+    player : object
+        A player instance in the current game (i.e., an object corresponding to
+        one of the player objects `game.__player_1__` or `game.__player_2__`.)
+
+    Returns
+    -------
+    float
+        The heuristic value of the current game state to the specified player.
+    """
+    # Score is equal to the player's legal moves minus opponent's legal moves
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+
+    own_moves = len(game.get_legal_moves(player))
+    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+    return float(own_moves - opp_moves)   
 
 def custom_score_3(game, player):
     """Calculate the heuristic value of a game state from the point of view
@@ -85,13 +100,14 @@ def custom_score_3(game, player):
     """
     # Score is combination of number of open spaces, closeness to center
     # of board, and opponent's moves
+    h, w = game.height/2., game.width/2.
+    x,y = game.get_player_location(player)
     own_moves = len(game.get_legal_moves(player))
-    board_center = (round(game.height/2), round(game.width/2))
-    position = game.get_player_location(player)
+
     opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
 
     # taxicab distance to center of board
-    dist = abs(position[0] - board_center[0]) + abs(position[1] - board_center[1])
+    dist = abs(x - w) + abs(h - y)
 
     return float(own_moves - dist - opp_moves) 
 
