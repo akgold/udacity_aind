@@ -33,8 +33,10 @@ def custom_score(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
-    # TODO: finish this function!
-    return float(len(game.get_legal_moves(player)))
+    # Score is equal to the player's legal moves minus opponent's legal moves
+    own_moves = len(game.get_legal_moves(player))
+    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+    return float(own_moves - opp_moves)
 
 def custom_score_2(game, player):
     """Calculate the heuristic value of a game state from the point of view
@@ -58,9 +60,15 @@ def custom_score_2(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
-    # TODO: finish this function!
-    raise NotImplementedError
+    # Score is combination of number of open spaces and closeness to center
+    # of board
+    own_moves = len(game.get_legal_moves(player))
+    board_center = (round(game.height/2), round(game.width/2))
+    position = game.get_player_location(player)
+    # taxicab distance to center of board
+    dist = abs(position[0] - board_center[0]) + abs(position[1] - board_center[1])
 
+    return float(own_moves - dist)        
 
 def custom_score_3(game, player):
     """Calculate the heuristic value of a game state from the point of view
@@ -84,8 +92,17 @@ def custom_score_3(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
-    # TODO: finish this function!
-    raise NotImplementedError
+    # Score is combination of number of open spaces, closeness to center
+    # of board, and opponent's moves
+    own_moves = len(game.get_legal_moves(player))
+    board_center = (round(game.height/2), round(game.width/2))
+    position = game.get_player_location(player)
+    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+
+    # taxicab distance to center of board
+    dist = abs(position[0] - board_center[0]) + abs(position[1] - board_center[1])
+
+    return float(own_moves - dist - opp_moves) 
 
 
 class IsolationPlayer:
@@ -379,11 +396,6 @@ class AlphaBetaPlayer(IsolationPlayer):
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
 
-        moves = game.get_legal_moves()
-
-        if moves == []:
-            return (-1, -1)
-
         # Define max and min val functions
         def _ab_max_val(game, alpha, beta, depth):
             if self.time_left() < self.TIMER_THRESHOLD:
@@ -429,25 +441,42 @@ class AlphaBetaPlayer(IsolationPlayer):
 
             val = float('inf')
 
-            new_games = [game.forecast_move(move) for move in moves]
-            for new_game in new_games:
+            print("Min Node Searching: " + str(moves))
+            print("Alpha: " + str(alpha))
+            for move in moves:
                 # Get value of child node
-                val = min(val, _ab_max_val(new_game, alpha, beta, depth - 1))
+                val = min(val, _ab_max_val(game.forecast_move(move), alpha, beta, depth - 1))
                 # return if value smaller than largest sibling
+                print(move)
+                print(val)
                 if val <= alpha:
+                    print("CUTOFF BY ALPHA")
                     return val
                 # set smallest sibling
                 beta = min(beta, val)
 
             return val
 
+        moves = game.get_legal_moves()
+
+        if moves == []:
+            return (-1, -1)
+
         max_val = -float('inf')
         best_move = (-1, -1)
 
+        # Get maximal move with a - b pruning
+        print("Top Node Searching:")
+        print(game.to_string())
+        print(moves)
         for move in moves:
             val = _ab_min_val(game.forecast_move(move), alpha, beta, depth - 1)
+            print("Top Node")
+            print("VAL: " + str(val))
+            alpha = max(alpha, val)
+            print(alpha)
+
             if val > max_val:
-                alpha = max(alpha, val)
                 max_val = val
                 best_move = move
         

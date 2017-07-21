@@ -60,7 +60,7 @@ class AlphaBetaTest(unittest.TestCase):
 	def testAB(self):
 		game = self.setUp()
 		self.player1.time_left = tl
-		print(self.player1.alphabeta(game, 4))
+		print(self.player1.alphabeta(game, 2))
 
 class IsolationTest(unittest.TestCase):
     """Unit tests for isolation agents"""
